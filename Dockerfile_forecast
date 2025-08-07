@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y pandoc
 COPY . /app
 COPY climada_docker.conf /app/climada.conf
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y pandoc
 RUN . "${HOME}/conda/etc/profile.d/conda.sh" \
     && . "${HOME}/conda/etc/profile.d/mamba.sh" \
     && mamba activate climada_env \

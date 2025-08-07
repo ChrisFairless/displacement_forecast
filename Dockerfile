@@ -55,6 +55,7 @@ SHELL ["/bin/sh", "-c"]
 
 # Install minimal runtime dependencies
 RUN apt-get update
+RUN apt-get install -y pandoc
 
 # Copy conda environment and CLIMADA from builder
 COPY --from=builder /root/conda /root/conda
@@ -65,4 +66,4 @@ COPY entrypoint.sh /app/entrypoint.sh
 WORKDIR /app/
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["./run.sh"]
+CMD ["python", "process_forecast.py"]
