@@ -203,7 +203,7 @@ def build_report(time_str, overwrite=False):
     # Run the command
     subprocess.run(cmd, check=True)
 
-    os.copy(output_html, Path(LATEST_DIR, f'report.html'))
+    shutil.copy(output_html, Path(LATEST_DIR, f'report.html'))
 
 
 
