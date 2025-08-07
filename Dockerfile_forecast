@@ -1,0 +1,14 @@
+FROM climada_petals:latest
+
+RUN apt-get update && apt-get install -y pandoc
+
+COPY . /app
+COPY climada_docker.conf /app/climada.conf
+WORKDIR /app
+RUN . "${HOME}/conda/etc/profile.d/conda.sh" \
+    && . "${HOME}/conda/etc/profile.d/mamba.sh" \
+    && mamba activate climada_env \
+    && pip install -e .
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["python", "process_forecast.py"]

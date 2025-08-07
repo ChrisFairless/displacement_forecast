@@ -170,26 +170,10 @@ def get_forecast_times(current_timestamp: pd.Timestamp) -> Tuple[pd.Timestamp, p
     previous_forecast_time = forecast_time - pd.Timedelta(hours=12)
     return forecast_time, previous_forecast_time
 
-def get_tc_wind_files(forecast_time: pd.Timestamp, 
-                      previous_forecast_time: pd.Timestamp, 
-                      tc_wind_dir: str) -> List[str]:
-    """Get the list of TC wind files for the given forecast times."""
-    forecast_time_str = forecast_time.strftime('%Y-%m-%d_%HUTC')
-    file_pattern = os.path.join(tc_wind_dir, f"*{forecast_time_str}.hdf5")
-    tc_wind_files = glob.glob(file_pattern)
-    
-    if not tc_wind_files:
-        print(f"No TC activities at {forecast_time_str}. Trying the previous forecast.")
-        forecast_time_str = previous_forecast_time.strftime('%Y-%m-%d_%HUTC')
-        file_pattern = os.path.join(tc_wind_dir, f"*{forecast_time_str}.hdf5")
-        tc_wind_files = glob.glob(file_pattern)
-        
-    return forecast_time_str, tc_wind_files
     
 def summarize_forecast(country_iso3: str,
                        forecast_time: str,
                        impact_type: str,
-                       tc_haz: TCTracks,
                        tc_name: str,
                        impact: Impact):
     """
@@ -235,7 +219,7 @@ def save_forecast_summary(save_dir: Union[str, Path],
     }
 
     # Save the GeoJSON data to a file
-    with open(save_dir+make_save_filename(forecast_summary, save_file_type="summary"),
+    with open(Path(save_dir, make_save_filename(forecast_summary, save_file_type="summary")),
               'w') as f:
         json.dump(geojson_data, f, indent=4)
 
@@ -288,10 +272,10 @@ def save_average_impact_geospatial_points(save_dir: Union[str, Path],
     imp_gdf = impact._build_exp().gdf
 
     if include_zeros:
-        imp_gdf.to_file(save_dir+make_save_filename(imp_summary_dict, save_file_type="gdf"))
+        imp_gdf.to_file(Path(save_dir, make_save_filename(imp_summary_dict, save_file_type="gdf")))
     else:
         imp_gdf.drop(imp_gdf[imp_gdf['value'] == 0].index, inplace=True)
-        imp_gdf.to_file(save_dir+make_save_filename(imp_summary_dict, save_file_type="gdf"))
+        imp_gdf.to_file(Path(save_dir, make_save_filename(imp_summary_dict, save_file_type="gdf")))
 
 def save_impact_at_event(save_dir: Union[str, Path],
                         imp_summary_dict: dict,
@@ -322,7 +306,7 @@ def save_impact_at_event(save_dir: Union[str, Path],
         f'impact-at-event_TC_ECMWF_ens_{imp_summary_dict["eventName"]}_{imp_summary_dict["initializationTime"]}'
         f'_{imp_summary_dict["countryISO3"]}_{imp_summary_dict["impactType"]}.csv'
         )
-    df.to_csv(save_dir +save_file_name)
+    df.to_csv(Path(save_dir, save_file_name))
     
 
 def _check_event_no(impact: Impact):

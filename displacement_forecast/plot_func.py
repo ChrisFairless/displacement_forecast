@@ -278,7 +278,8 @@ def plot_imp_map_exposed(impact_summary_dict: dict,
 
     impact_exp = impact._build_exp()
 
-    extent = impact_exp.gdf.geometry.to_crs(epsg=3857).total_bounds
+    # extent = impact_exp.gdf[impact_exp.gdf['value'] != 0].geometry.to_crs(epsg=3857).total_bounds
+    extent = impact_exp.gdf[impact.eai_exp > 0].geometry.to_crs(epsg=3857).total_bounds
     impact_exp.to_crs("EPSG:3857", inplace=True)
     gdf = impact_exp.gdf
 
@@ -350,7 +351,7 @@ def plot_imp_map_displacement(impact_summary_dict: dict,
 
     impact_exp = impact._build_exp()
 
-    extent = impact_exp.gdf.geometry.to_crs(epsg=3857).total_bounds
+    extent = impact_exp.gdf[impact_exp.gdf['value'] != 0].geometry.to_crs(epsg=3857).total_bounds
     impact_exp.to_crs("EPSG:3857", inplace=True)
     gdf = impact_exp.gdf
 
