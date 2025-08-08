@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y pandoc
 
 COPY . /app
 COPY climada_docker.conf /app/climada.conf
+COPY entrypoint_docker.sh /app/entrypoint.sh
 WORKDIR /app
 RUN apt-get update \
     && apt-get install -y pandoc
