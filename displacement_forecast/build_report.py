@@ -45,7 +45,6 @@ def build_report(time_str, overwrite=False):
     if not os.path.exists(FORECAST_DIR):
         raise FileNotFoundError(f"Directory {str(FORECAST_DIR)} does not exist. Please download the forecast first and calculate wind fields and impacts.")
     os.makedirs(REPORT_DIR, exist_ok=True)
-    os.makedirs(LATEST_DIR, exist_ok=True)
 
     if os.path.exists(Path(REPORT_DIR, 'report.md')) and not overwrite:
         print(f"Report for forecast {time_str} already built, skipping.")
