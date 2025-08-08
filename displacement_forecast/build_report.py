@@ -39,7 +39,6 @@ def build_report(time_str, overwrite=False):
     IMPACT_DIR = Path(FORECAST_DIR, "impacts")
     IMPACT_ANALYSIS_DIR = Path(FORECAST_DIR, "analysis_impacts")
     REPORT_DIR = Path(FORECAST_DIR, "report")
-    LATEST_DIR = Path(WORKING_DIR, "latest_report")
 
     summary_stats = {}
 
@@ -202,9 +201,6 @@ def build_report(time_str, overwrite=False):
 
     # Run the command
     subprocess.run(cmd, check=True)
-
-    shutil.copy(output_html, Path(LATEST_DIR, f'report.html'))
-
 
 
 def find_replace_in_file(file_path, find_replace_dict):
