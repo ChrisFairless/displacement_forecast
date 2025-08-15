@@ -9,13 +9,11 @@ import pandas as pd
 from pathlib import Path
 import subprocess
 import shutil
+import pycountry
 from datetime import datetime, timedelta
 
 from climada import CONFIG
-from climada.hazard import Hazard
 from climada.util.coordinates import get_country_code, country_to_iso
-from climada.util.api_client import Client
-client = Client()
 
 from displacement_forecast.impact_calc_func import (
     round_to_previous_12h_utc, get_forecast_times,
@@ -50,8 +48,8 @@ def build_report(time_str, overwrite=False):
         print(f"Report for forecast {time_str} already built, skipping.")
         return
 
-    index_file = Path(TEMPLATE_DIR, 'index.md')
-    report_components = [index_file]
+    report_file = Path(REPORT_DIR, 'report.md')
+    shutil.copy(Path(TEMPLATE_DIR, 'index.md'), report_file)
     find_replace = {}
 
     # load data
@@ -67,17 +65,15 @@ def build_report(time_str, overwrite=False):
     summary_stats['number_affecting_people'] = 0
     summary_stats['number_displacing_people'] = 0
 
+
+    print("Adding overview")
+    overview_file = Path(TEMPLATE_DIR, 'tracks_overview.md')
+    append_file(report_file, overview_file)
+
     track_plot_filename = f"ECMWF_TC_tracks_{time_str}.png"
     track_plot_path = Path(TRACK_ANALYSIS_DIR, track_plot_filename)
     shutil.copy(track_plot_path, Path(REPORT_DIR, track_plot_filename))
     find_replace['XX_tracks_plot_XX'] = track_plot_filename
-
-    print("Adding overview")
-    overview_file = Path(REPORT_DIR, 'tracks_overview.md')
-    shutil.copy(Path(TEMPLATE_DIR, 'tracks_overview.md'), overview_file)
-    find_replace_in_file(overview_file, find_replace)
-    report_components.append(overview_file)
-
 
     # This section was for the interactive map plot. Not using that for now, going static instead.
 
@@ -107,33 +103,32 @@ def build_report(time_str, overwrite=False):
         tc_name = tc_base_file_name.split('_')[2]
         find_replace['XX_name_XX'] = tc_name
         summary_stats['storm_names'].append(tc_name)
+        summary_stats['storms_affecting_people'] = set()
+        summary_stats['storms_displacing_people'] = set()
 
         impact_files = os.listdir(IMPACT_DIR)
         impact_files = [f for f in impact_files if f.startswith(tc_name)]
         country_code_all = [f.split('_')[1] for f in impact_files]
         country_code_unique = np.unique(country_code_all)
+        forecast_time = datetime.strptime(time_str, '%Y%m%d%H0000')
+        formatted_datetime = forecast_time.strftime('%Y-%m-%d_%HUTC')
 
         if len(country_code_unique) == 0:
             print(f"No affected countries found for storm {tc_name}.")
-            shutil.copy(Path(TEMPLATE_DIR, 'exposed_none.md'), Path(REPORT_DIR, 'exposed_none.md'))
-            shutil.copy(Path(TEMPLATE_DIR, 'displacement_none.md'), Path(REPORT_DIR, 'displacement_none.md'))
-            find_replace_in_file(Path(REPORT_DIR, 'exposed_none.md'), find_replace)
-            find_replace_in_file(Path(REPORT_DIR, 'displacement_none.md'), find_replace)
-            report_components.append(Path(REPORT_DIR, 'exposed_none.md'))
-            report_components.append(Path(REPORT_DIR, 'displacement_none.md'))
+            append_file(report_file, Path(TEMPLATE_DIR, 'exposed_none.md'))
+            append_file(report_file, Path(TEMPLATE_DIR, 'displaced_none.md'))
             continue
-
 
         for country_code in country_code_unique:
             print("Working on country code:", country_code)
 
             country_iso3 = country_to_iso(country_code, "alpha3")
-
+            country_name = pycountry.countries.get(alpha_3=country_iso3).name
             storm_dict = {
                 "eventName": tc_name,
                 "countryISO3": country_iso3,
-                "initializationTime": time_str,
-                "impactType": "exposed_population_32.92ms",
+                "initializationTime": formatted_datetime,
+                "impactType": "exposed",
             }
             exposed_map_filename = make_save_map_file_name(storm_dict)
             exposed_hist_filename = make_save_histogram_file_name(storm_dict)
@@ -141,62 +136,52 @@ def build_report(time_str, overwrite=False):
             exposed_hist_path = Path(IMPACT_ANALYSIS_DIR, exposed_hist_filename)
             find_replace['XX_exposed_map_path_XX'] = exposed_map_filename
             find_replace['XX_exposed_hist_path_XX'] = exposed_hist_filename
-            exposed_file = Path(REPORT_DIR, f"exposed_{tc_name}_{country_iso3}.md")
+            find_replace['XX_country_XX'] = country_name
 
             if os.path.exists(exposed_map_path):
                 print("processing " + str(exposed_map_path))
-                shutil.copy(Path(TEMPLATE_DIR, 'exposed.md'), exposed_file)
+                append_file(report_file, Path(TEMPLATE_DIR, 'exposed.md'))
+                find_replace_in_file(report_file, find_replace)
                 shutil.copy(exposed_map_path, Path(REPORT_DIR, exposed_map_filename))
                 shutil.copy(exposed_hist_path, Path(REPORT_DIR, exposed_hist_filename))
-                summary_stats['number_affecting_people'] += 1
+                summary_stats['storms_affecting_people'].add(tc_name)
             else:
                 print("No exposed population found at " + str(exposed_map_path))
-                shutil.copy(Path(TEMPLATE_DIR, 'exposed_none.md'), exposed_file)
-            find_replace_in_file(exposed_file, find_replace)
-            report_components.append(exposed_file)
 
-
-            storm_dict["impactType"] = "displacement"
+            storm_dict["impactType"] = "displaced"
             displacement_map_filename = make_save_map_file_name(storm_dict)
             displacement_hist_filename = make_save_histogram_file_name(storm_dict)
             displacement_map_path = Path(IMPACT_ANALYSIS_DIR, displacement_map_filename)
             displacement_hist_path = Path(IMPACT_ANALYSIS_DIR, displacement_hist_filename)
             find_replace['XX_displacement_map_path_XX'] = displacement_map_filename
             find_replace['XX_displacement_hist_path_XX'] = displacement_hist_filename
-            displacement_file = Path(REPORT_DIR, f"displacement_{tc_name}_{country_iso3}.md")
 
             if os.path.exists(displacement_map_path):
                 print("processing " + str(displacement_map_path))
-                shutil.copy(Path(TEMPLATE_DIR, 'displacement.md'), displacement_file)
+                append_file(report_file, Path(TEMPLATE_DIR, 'displaced.md'))
+                find_replace_in_file(report_file, find_replace)
                 shutil.copy(displacement_map_path, Path(REPORT_DIR, displacement_map_filename))
                 shutil.copy(displacement_hist_path, Path(REPORT_DIR, displacement_hist_filename))
-                summary_stats['number_displacing_people'] += 1
+                summary_stats['storms_displacing_people'].add(tc_name)
             else:
                 print("No displaced population found at " + str(displacement_map_path))
-                shutil.copy(Path(TEMPLATE_DIR, 'displacement_none.md'), displacement_file)
-            find_replace_in_file(displacement_file, find_replace)
-            report_components.append(displacement_file)
+                append_file(report_file, Path(TEMPLATE_DIR, 'displaced_none.md'))
 
+    summary_stats['storms_affecting_people'] = list(summary_stats['storms_affecting_people'])
+    summary_stats['storms_displacing_people'] = list(summary_stats['storms_displacing_people'])
+    summary_stats['number_affecting_people'] = len(summary_stats['storms_affecting_people'])
+    summary_stats['number_displacing_people'] = len(summary_stats['storms_displacing_people'])
     json.dump(summary_stats, open(Path(REPORT_DIR, 'summary_stats.json'), 'w', encoding='utf-8'))
 
     print("Combining report components")
-
-    # List of input files to combine
-    report_components = [str(f) for f in report_components]
-    output_file = Path(REPORT_DIR, 'report.md')
-
-    with open(output_file, 'w', encoding='utf-8') as outfile:
-        for fname in report_components:
-            with open(fname, 'r', encoding='utf-8') as infile:
-                outfile.write(infile.read())
-                outfile.write('\n')
+    find_replace_in_file(report_file, find_replace)
 
     # Build the pandoc command
     # cmd = ['pandoc', *report_components, '-o', output_file]
 
     # Build the pandoc command
-    output_html = Path(REPORT_DIR, 'report.html')
-    cmd = ['pandoc', output_file, '-o', output_html]
+    report_html = Path(REPORT_DIR, 'report.html')
+    cmd = ['pandoc', report_file, '-o', report_html]
 
     # Run the command
     subprocess.run(cmd, check=True)
@@ -211,3 +196,10 @@ def find_replace_in_file(file_path, find_replace_dict):
 
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(content)
+
+
+def append_file(file1, file2):
+    with open(file1, 'a') as f1:
+        with open(file2, 'r') as f2:
+            shutil.copyfileobj(f2, f1)
+            f1.write('\n')

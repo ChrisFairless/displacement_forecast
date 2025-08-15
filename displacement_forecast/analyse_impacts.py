@@ -24,6 +24,13 @@ from displacement_forecast.impact_calc_func import (
     save_forecast_summary, save_average_impact_geospatial_points,
     save_impact_at_event
     )
+from displacement_forecast.plot_func import (
+    plot_imp_map_exposed,
+    plot_imp_map_displacement,
+    plot_histogram,
+    make_save_map_file_name,
+    make_save_histogram_file_name
+)
 
 WORKING_DIR = CONFIG.forecast_sandbox.dir.str()
 
@@ -67,7 +74,7 @@ def analyse_impacts(time_str=None, overwrite=False):
         imp_summary = summarize_forecast(
             country_iso3=country_iso3,
             forecast_time=formatted_datetime,
-            impact_type="exposed_population_32.92ms",
+            impact_type=impact_type,
             tc_name=tc_name,
             impact=impact)
 
@@ -85,18 +92,18 @@ def analyse_impacts(time_str=None, overwrite=False):
         
         if impact_type == "exposed":
             # create impact maps
-            ax_map_exposed = plot_imp_map_exposed(imp_exposed_summary, impact_exposed)
-            ax_map_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_exposed_summary)))
+            ax_map_exposed = plot_imp_map_exposed(imp_summary, impact)
+            ax_map_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
 
             # create histogram
-            ax_hist_exposed = plot_histogram(imp_exposed_summary, impact_exposed)
-            ax_hist_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_exposed_summary)))
+            ax_hist_exposed = plot_histogram(imp_summary, impact)
+            ax_hist_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))
 
         if impact_type == "displacement":
             # create impact maps
-            ax_map_displacement = plot_imp_map_displacement(imp_displacement_summary, impact_displacement)
-            ax_map_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_displacement_summary)))
+            ax_map_displacement = plot_imp_map_displacement(imp_summary, impact)
+            ax_map_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
 
             # create histogram
-            ax_hist_displacement = plot_histogram(imp_displacement_summary, impact_displacement)
-            ax_hist_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_displacement_summary)))
+            ax_hist_displacement = plot_histogram(imp_summary, impact)
+            ax_hist_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))

@@ -1,4 +1,4 @@
-## XX_name_XX: people displaced
+## XX_name_XX XX_country_XX: people displaced
 
 ![Histogram of possible displaced population](XX_displacement_hist_path_XX)
 

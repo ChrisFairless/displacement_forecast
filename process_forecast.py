@@ -5,7 +5,8 @@ from displacement_forecast import (
     # analyse_windfields,
     calculate_impacts,
     analyse_impacts,
-    build_report
+    build_report,
+    build_index_page
 )
     
 
@@ -35,9 +36,13 @@ def process_forecast(time_str=None, overwrite=False):
     analyse_impacts.analyse_impacts(time_str, overwrite=overwrite)
 
     print("--- STEP 6: Building report ---")
-    build_report.build_report(time_str, overwrite=overwrite)
+    build_report.build_report(time_str, overwrite=True)
+
+    print("--- STEP 7: Rebuilding index page ---")
+    build_index_page.build_index_page()
+
 
 
 if __name__ == "__main__":
-    process_forecast('20250807000000')
-    # process_forecast()
+    # process_forecast('20250812120000', overwrite=True)
+    process_forecast()
