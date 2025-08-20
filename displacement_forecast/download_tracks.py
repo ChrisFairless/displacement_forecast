@@ -29,16 +29,25 @@ def get_forecast_tracks(time_str):
     return TCTracks.from_hdf5(Path(TRACKS_DIR, "ECMWF_TC_tracks.h5"))
 
 
+def count_named_storms(time_str):
+    FORECAST_DIR = Path(WORKING_DIR, time_str)
+    BUFR_DIR = Path(FORECAST_DIR, "bufr")
+    downloaded_files = os.listdir(BUFR_DIR)
+    if len(downloaded_files) == 0:
+        raise FileNotFoundError(f"No BUFR files found in {BUFR_DIR}. Please download the forecast first.")
+    storm_ids = [s.split('_')[8] for s in downloaded_files]
+    named_storms = [s for s in storm_ids if not s[0].isdigit()]
+    return len(named_storms)
+
+
 def download_and_process_forecast(time_str, overwrite=False):
     download_forecast(time_str, overwrite=overwrite)
     process_bufr(time_str, overwrite=overwrite)
 
 
 def download_forecast(time_str, overwrite=False):
-
     # Forecast time string must be in the format '%Y%m%d%H0000'
 
-    # Download forecast
     FORECAST_DIR = Path(WORKING_DIR, time_str)
     os.makedirs(FORECAST_DIR, exist_ok=True)
 
@@ -48,8 +57,12 @@ def download_forecast(time_str, overwrite=False):
     local_files = os.listdir(BUFR_DIR)
     if len(local_files) > 0 and not overwrite:
         print(f"Forecast {time_str} already downloaded, skipping.")
-    else:
+        return
+
+    try:
         TCForecast.fetch_bufr_ftp(target_dir=BUFR_DIR, remote_dir=time_str)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(f"Failed to download forecast for {time_str}: most likely it has not been processed and uploaded yet: {e}")
 
 
 
@@ -73,6 +86,15 @@ def process_bufr(time_str, overwrite=False):
     # filter to named storms
     tr_filter = filter_storm(tr_fcast)
 
+    # Consistency check: ensure the number of named storms matches the BUFR count
+    bufr_named_count = count_named_storms(time_str)
+    assert (len(tr_filter.data) > 0) == (bufr_named_count > 0), \
+        f"The {bufr_named_count} named storm files is inconsistent with the {len(tr_filter.data)} tracks in the forecast."
+
+    if len(tr_filter.data) == 0:
+        print(f"No named storms found in forecast {time_str}.")
+        return
+
     # interpolate to 10-minute timesteps
     tr_filter.equal_timestep(1/6)
 
@@ -81,7 +103,7 @@ def process_bufr(time_str, overwrite=False):
 
     # write tracks to file
     tr_filter.write_hdf5(Path(TRACKS_DIR, "ECMWF_TC_tracks.h5"))
-
+    
 
 
 def download_and_process_latest_forecast(overwrite=False):
