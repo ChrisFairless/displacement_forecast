@@ -5,7 +5,8 @@ from displacement_forecast import (
     # analyse_windfields,
     calculate_impacts,
     analyse_impacts,
-    build_report
+    build_report,
+    build_index_page
 )
     
 
@@ -24,6 +25,9 @@ def process_all_forecasts(overwrite=False):
 
         print("--- STEP 1: Downloading ---")
         download_tracks.download_and_process_forecast(time_str, overwrite=overwrite)
+        if download_tracks.count_named_storms(time_str) == 0:
+            print(f"No named storms found in forecast {time_str}. Finished.")
+            continue
 
         print("--- STEP 2: Analysing forecast tracks ---")
         analyse_tracks.analyse_tracks(time_str, overwrite=overwrite)
@@ -42,6 +46,9 @@ def process_all_forecasts(overwrite=False):
 
         print("--- STEP 6: Building report ---")
         build_report.build_report(time_str, overwrite=overwrite)
+
+    print("--- STEP 7: Rebuilding index page ---")
+    build_index_page.build_index_page()
 
 
 if __name__ == "__main__":
