@@ -5,7 +5,8 @@ from displacement_forecast import (
     # analyse_windfields,
     calculate_impacts,
     analyse_impacts,
-    build_report
+    build_report,
+    build_index_page
 )
 import os
 import sys
@@ -119,20 +120,29 @@ def check_outputs_complete(fix=False):
 
         forecast_dict[time_str] = forecast
 
+    if fix:
+        print("--- STEP 7: Rebuilding index page ---")
+        try:
+            build_index_page.build_index_page()
+        except Exception as e:
+            print(f"Error updating index page: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+
     print("Writing output")
+    output_path = Path(WORKING_DIR, 'check_outputs.csv')
+    print(output_path)
     out = pd.DataFrame(forecast_dict).T
     print(out)
-    out.to_csv(Path(WORKING_DIR, 'check_outputs.csv'), index=False)
+    out.to_csv(output_path, index=False)
 
 
 
 def check_downloads(forecast, fix=False):    
-    if fix and not forecast['local'] and forecast['ftp']:
-        print(f"Missing download: downloading forecast {forecast['time_str']}...")
-        download_tracks.download_and_process_forecast(forecast['time_str'], overwrite=True)      
+    if fix and not forecast['exists_local']:
+        if forecast['exists_ftp']:
+            print(f"Missing download: downloading forecast {forecast['time_str']}...")
+            download_tracks.download_and_process_forecast(forecast['time_str'], overwrite=True)      
 
-    print('hi')
-    print(forecast['dir']['bufr'])
     if not os.path.exists(forecast['dir']['bufr']):
         forecast['errors'].append(f"No downloaded data found")
         return forecast
@@ -155,6 +165,10 @@ def check_downloads(forecast, fix=False):
         forecast['final_step'] = 'download_tracks'
         return forecast
     
+    if forecast['number_storms'] == 0:
+        forecast['final_step'] = 'download_tracks'
+        return forecast
+
     if fix and not os.path.exists(forecast['dir']['tracks']):
         print(f"Missing tracks folder: reprocessing forecast {forecast['time_str']}...")
         download_tracks.process_forecast(forecast['time_str'], overwrite=True)
@@ -166,11 +180,11 @@ def check_downloads(forecast, fix=False):
 
     if not os.path.exists(tracks_path):
         forecast['errors'].append(f"No tracks file found at {tracks_path}.")
-        forecast['final_step'] = 'download_tracks'
         return forecast
-    
+
     forecast['success_write_tracks'] = True
     return forecast
+
 
 def check_track_plots(forecast, fix=False):
     if not forecast['success_write_tracks']:
