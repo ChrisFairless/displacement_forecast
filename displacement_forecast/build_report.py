@@ -117,6 +117,8 @@ def build_report(time_str, overwrite=False):
             print(f"No affected countries found for storm {tc_name}.")
             append_file(report_file, Path(TEMPLATE_DIR, 'exposed_none.md'))
             append_file(report_file, Path(TEMPLATE_DIR, 'displaced_none.md'))
+            find_replace['XX_country_XX'] = "All countries"
+            find_replace_in_file(report_file, find_replace)
             continue
 
         for country_code in country_code_unique:
@@ -124,19 +126,21 @@ def build_report(time_str, overwrite=False):
 
             country_iso3 = country_to_iso(country_code, "alpha3")
             country_name = pycountry.countries.get(alpha_3=country_iso3).name
+            find_replace['XX_country_XX'] = country_name
+
             storm_dict = {
                 "eventName": tc_name,
                 "countryISO3": country_iso3,
-                "initializationTime": formatted_datetime,
-                "impactType": "exposed",
+                "initializationTime": formatted_datetime
             }
+
+            storm_dict["impactType"] = "exposed"
             exposed_map_filename = make_save_map_file_name(storm_dict)
             exposed_hist_filename = make_save_histogram_file_name(storm_dict)
             exposed_map_path = Path(IMPACT_ANALYSIS_DIR, exposed_map_filename)
             exposed_hist_path = Path(IMPACT_ANALYSIS_DIR, exposed_hist_filename)
             find_replace['XX_exposed_map_path_XX'] = exposed_map_filename
             find_replace['XX_exposed_hist_path_XX'] = exposed_hist_filename
-            find_replace['XX_country_XX'] = country_name
 
             if os.path.exists(exposed_map_path):
                 print("processing " + str(exposed_map_path))
@@ -147,6 +151,7 @@ def build_report(time_str, overwrite=False):
                 summary_stats['storms_affecting_people'].add(tc_name)
             else:
                 print("No exposed population found at " + str(exposed_map_path))
+                continue
 
             storm_dict["impactType"] = "displaced"
             displacement_map_filename = make_save_map_file_name(storm_dict)
