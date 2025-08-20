@@ -134,6 +134,33 @@ def build_report(time_str, overwrite=False):
                 "initializationTime": formatted_datetime
             }
 
+            storm_dict["impactType"] = "cat1"
+            cat1_map_filename = make_save_map_file_name(storm_dict)
+            cat1_map_path = Path(IMPACT_ANALYSIS_DIR, cat1_map_filename)
+            find_replace['XX_cat1_map_path_XX'] = cat1_map_filename
+
+            if os.path.exists(cat1_map_path):
+                print("processing " + str(cat1_map_path))
+                append_file(report_file, Path(TEMPLATE_DIR, 'affected_by_cat1.md'))
+                find_replace_in_file(report_file, find_replace)
+                shutil.copy(cat1_map_path, Path(REPORT_DIR, cat1_map_filename))
+            else:
+                print("No map of cat 1 affected areas found at " + str(cat1_map_filename))
+                continue
+
+            storm_dict["impactType"] = "cat3"
+            cat3_map_filename = make_save_map_file_name(storm_dict)
+            cat3_map_path = Path(IMPACT_ANALYSIS_DIR, cat3_map_filename)
+            find_replace['XX_cat3_map_path_XX'] = cat3_map_filename
+
+            if os.path.exists(cat3_map_path):
+                print("processing " + str(cat3_map_path))
+                append_file(report_file, Path(TEMPLATE_DIR, 'affected_by_cat3.md'))
+                find_replace_in_file(report_file, find_replace)
+                shutil.copy(cat3_map_path, Path(REPORT_DIR, cat3_map_filename))
+            else:
+                print("No map of cat 3 affected areas found at " + str(cat1_map_filename))
+
             storm_dict["impactType"] = "exposed"
             exposed_map_filename = make_save_map_file_name(storm_dict)
             exposed_hist_filename = make_save_histogram_file_name(storm_dict)

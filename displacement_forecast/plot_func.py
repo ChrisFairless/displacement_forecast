@@ -54,6 +54,7 @@ for i in range(cmap.N):
     # rgb2hex accepts rgb or rgba
     cmap_hex.append(mpl.colors.rgb2hex(rgba))
 
+
 def categorize_wind(speed):
     """Saffir-Simpson Hurricane Scale"""
     if speed < 17.49:
@@ -280,6 +281,8 @@ def plot_imp_map_exposed(impact_summary_dict: dict,
 
     # extent = impact_exp.gdf[impact_exp.gdf['value'] != 0].geometry.to_crs(epsg=3857).total_bounds
     extent = impact_exp.gdf[impact.eai_exp > 0].geometry.to_crs(epsg=3857).total_bounds
+    extent = standardise_extent(extent)
+
     impact_exp.to_crs("EPSG:3857", inplace=True)
     gdf = impact_exp.gdf
 
@@ -290,7 +293,7 @@ def plot_imp_map_exposed(impact_summary_dict: dict,
 
     # Make values below 10 transparent
     threshold = 10
-    alphas = np.ones(n)
+    alphas = np.ones(n) * 0.7
     alphas[:int(threshold / np.max(gdf["value"]) * n)] = 0.0
     vals[:, -1] = alphas
 
@@ -303,13 +306,17 @@ def plot_imp_map_exposed(impact_summary_dict: dict,
 
     norm = Normalize(vmin=vmin, vmax=vmax)
 
+    d_lat = np.diff(np.sort(gdf.geometry.x))
+    d_lat = d_lat[d_lat != 0].min()
+    gridsize = int(np.ceil((extent[2] - extent[0]) / (2 * d_lat)))
+
     hb = ax.hexbin(
         x=gdf.geometry.x,
         y=gdf.geometry.y,
         C=gdf["value"],
         reduce_C_function=np.sum,
         norm=norm,
-        gridsize=200,
+        gridsize=gridsize,
         extent=(extent[0], extent[2], extent[1], extent[3]),
         lw=0.0,
         cmap=transparent_cmap,
@@ -352,6 +359,8 @@ def plot_imp_map_displacement(impact_summary_dict: dict,
     impact_exp = impact._build_exp()
 
     extent = impact_exp.gdf[impact_exp.gdf['value'] != 0].geometry.to_crs(epsg=3857).total_bounds
+    extent = standardise_extent(extent)
+
     impact_exp.to_crs("EPSG:3857", inplace=True)
     gdf = impact_exp.gdf
 
@@ -362,7 +371,7 @@ def plot_imp_map_displacement(impact_summary_dict: dict,
 
     # Make values below 10 transparent
     threshold = 10
-    alphas = np.ones(n)
+    alphas = np.ones(n) * 0.7
     alphas[:int(threshold / np.max(gdf["value"]) * n)] = 0.0
     vals[:, -1] = alphas
 
@@ -375,13 +384,17 @@ def plot_imp_map_displacement(impact_summary_dict: dict,
 
     norm = Normalize(vmin=vmin, vmax=vmax)
 
+    d_lat = np.diff(np.sort(gdf.geometry.x))
+    d_lat = d_lat[d_lat != 0].min()
+    gridsize = int(np.ceil((extent[2] - extent[0]) / (2 * d_lat)))
+
     hb = ax.hexbin(
         x=gdf.geometry.x,
         y=gdf.geometry.y,
         C=gdf["value"],
         reduce_C_function=np.sum,
         norm=norm,
-        gridsize=200,
+        gridsize=gridsize,
         extent=(extent[0], extent[2], extent[1], extent[3]),
         lw=0.0,
         cmap=transparent_cmap,
@@ -416,6 +429,83 @@ def plot_imp_map_displacement(impact_summary_dict: dict,
     )
 
     return ax
+
+
+def plot_map_cat(impact_summary_dict: dict,
+                 impact: Impact,
+                 category: int):
+    """Plot the proportion of ensemble members exceeding cat 1"""
+
+    impact_exp = impact._build_exp()
+
+    extent = impact_exp.gdf[impact_exp.gdf['value'] != 0].geometry.to_crs(epsg=3857).total_bounds
+    extent = standardise_extent(extent)
+
+    impact_exp.to_crs("EPSG:3857", inplace=True)
+    gdf = impact_exp.gdf
+
+    cmap = plt.get_cmap("turbo")
+    n = 256  # Number of discrete colors in the colormap
+    vals = cmap(np.linspace(0, 1, n))
+    vals[:, -1] = np.linspace(0.0, 1.0, n)  # Gradual transparency
+
+    # Make values below 0.01 transparent
+    threshold = 0.01
+    alphas = np.ones(n) * 0.7
+    alphas[:int(threshold / np.max(gdf["value"]) * n)] = 0.0
+    vals[:, -1] = alphas
+
+    transparent_cmap = ListedColormap(vals)
+
+    fig, ax = plt.subplots()
+
+    vmax = np.max(gdf["value"])
+    vmin = threshold  # Start normalization from threshold
+
+    norm = Normalize(vmin=0, vmax=1)
+
+    d_lat = np.diff(np.sort(gdf.geometry.x))
+    d_lat = d_lat[d_lat != 0].min()
+    gridsize = int(np.ceil((extent[2] - extent[0]) / (2 * d_lat)))
+
+    hb = ax.hexbin(
+        x=gdf.geometry.x,
+        y=gdf.geometry.y,
+        C=gdf["value"],
+        reduce_C_function=np.max,
+        norm=norm,
+        gridsize=gridsize,
+        extent=(extent[0], extent[2], extent[1], extent[3]),
+        lw=0.0,
+        cmap=transparent_cmap,
+    )
+
+    ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
+
+    ax.tick_params(left=False, labelleft=False, bottom=False, labelbottom=False)
+
+    # plt.colorbar(hb, ax=ax, label="Proportion of ensemble members", extend='min')
+
+    # Main title
+    ax.set_title(
+    f'Forecasted likelihood of Cat {category} winds in {impact_summary_dict["countryISO3"]}\nby TC {impact_summary_dict["eventName"]}'
+    )
+
+    # box with information
+    ax.text(
+        0.03,
+        0.03,
+        f'Forecast Date: {impact_summary_dict["initializationTime"]}',
+        transform=ax.transAxes,
+        ha="left",
+        va="bottom",
+        fontsize=9,
+        bbox={"boxstyle": "round", "facecolor": "white"},
+        zorder=10,
+    )
+
+    return ax
+
 
 def plot_histogram(impact_summary_dict: dict,
                     impact: Impact):
@@ -459,3 +549,18 @@ def plot_histogram(impact_summary_dict: dict,
         ax.spines[s].set_visible(False)
 
     return ax
+
+
+def standardise_extent(extent, min_dimension = 500000):
+    plot_size = np.max([min_dimension, extent[2] - extent[0], extent[3] - extent[1]])
+    extent[0], extent[2] = buffer_dimension((extent[0], extent[2]), plot_size)
+    extent[1], extent[3] = buffer_dimension((extent[1], extent[3]), plot_size)
+    return extent
+
+def buffer_dimension(bounds, target_size):
+    if bounds[1] - bounds[0] >= target_size:
+        return bounds
+    midpoint = 0.5 * (bounds[1] + bounds[0])
+    new_min = midpoint - 0.5 * target_size
+    new_max = midpoint + 0.5 * target_size
+    return (new_min, new_max)

@@ -27,6 +27,7 @@ from displacement_forecast.impact_calc_func import (
 from displacement_forecast.plot_func import (
     plot_imp_map_exposed,
     plot_imp_map_displacement,
+    plot_map_cat,
     plot_histogram,
     make_save_map_file_name,
     make_save_histogram_file_name
@@ -58,12 +59,15 @@ def analyse_impacts(time_str=None, overwrite=False):
     # Start the impact calculation for all the storms
     for impact_file in impact_files:
 
+        if impact_file == '.DS_Store':
+            continue  # ugh
+
         # extract tc_name and country from the hdf file
         tc_base_file_name = os.path.basename(impact_file)
         tc_name = tc_base_file_name.split('_')[0]
         country_iso3 = tc_base_file_name.split('_')[1]
         impact_type = tc_base_file_name.split('_')[2]
-        print(f"Analysing impacts for storm {tc_name} in country {country_iso3} for {impact_type} population...")
+        print(f"Analysing {impact_type} impacts for storm {tc_name} in country {country_iso3}...")
 
         forecast_time = datetime.strptime(time_str, '%Y%m%d%H0000')
         formatted_datetime = forecast_time.strftime('%Y-%m-%d_%HUTC')
@@ -78,18 +82,29 @@ def analyse_impacts(time_str=None, overwrite=False):
             tc_name=tc_name,
             impact=impact)
 
-        save_forecast_summary(
-            IMPACT_ANALYSIS_DIR,
-            imp_summary)
-        save_average_impact_geospatial_points(
-            IMPACT_ANALYSIS_DIR,
-            imp_summary,
-            impact)
-        save_impact_at_event(
-            IMPACT_ANALYSIS_DIR,
-            imp_summary,
-            impact)
-        
+        if impact_type in ["exposed", "displaced"]:
+            save_forecast_summary(
+                IMPACT_ANALYSIS_DIR,
+                imp_summary)
+            save_average_impact_geospatial_points(
+                IMPACT_ANALYSIS_DIR,
+                imp_summary,
+                impact)
+            save_impact_at_event(
+                IMPACT_ANALYSIS_DIR,
+                imp_summary,
+                impact)
+
+        if impact_type == "cat1":
+            # create affected area maps
+            ax_map_cat1 = plot_map_cat(imp_summary, impact, 1)
+            ax_map_cat1.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
+
+        if impact_type == "cat3":
+            # create affected area maps
+            ax_map_cat3 = plot_map_cat(imp_summary, impact, 3)
+            ax_map_cat3.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
+
         if impact_type == "exposed":
             # create impact maps
             ax_map_exposed = plot_imp_map_exposed(imp_summary, impact)
@@ -99,7 +114,7 @@ def analyse_impacts(time_str=None, overwrite=False):
             ax_hist_exposed = plot_histogram(imp_summary, impact)
             ax_hist_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))
 
-        if impact_type == "displacement":
+        if impact_type == "displaced":
             # create impact maps
             ax_map_displacement = plot_imp_map_displacement(imp_summary, impact)
             ax_map_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))

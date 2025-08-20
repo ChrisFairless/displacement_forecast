@@ -16,13 +16,17 @@ warnings.filterwarnings("ignore")
 import os
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 from pathlib import Path
 from datetime import datetime
+from geopandas import GeoDataFrame, points_from_xy
 
 from climada import CONFIG
 from climada.hazard import Hazard
+from climada.entity import Exposures
 from climada.engine import ImpactCalc
 from climada.util.coordinates import get_country_code, country_to_iso
+from climada.util.constants import DEF_CRS
 from climada.util.api_client import Client
 client = Client()
 
@@ -58,7 +62,7 @@ def calculate_impacts(time_str=None, overwrite=False):
     if len(tc_wind_files) == 0:
         print(f"No TC activities found at {time_str}. No impacts to calculate.")
 
-    # Start the impact calculation for all the storms
+    # Start the impact calculations for all the storms
     for tc_file in tc_wind_files:
 
         # extract the tc_name from the hdf file
@@ -68,7 +72,7 @@ def calculate_impacts(time_str=None, overwrite=False):
 
         # read the hdf file
         tc_haz = Hazard.from_hdf5(Path(WIND_DIR, tc_file))
-
+ 
         # get the country code where the wind speed >0
         idx_non_zero_wind = tc_haz.intensity.max(axis=0).nonzero()[1]
         country_code_all = get_country_code(
@@ -77,10 +81,48 @@ def calculate_impacts(time_str=None, overwrite=False):
                             )
         country_code_unique = np.trim_zeros(np.unique(country_code_all))
 
+        # generate a flat exposure from the hazard, to be used to show affected areas
+        flat_gdf = gpd.GeoDataFrame({
+            'lat': tc_haz.centroids.lat[idx_non_zero_wind],
+            'lon': tc_haz.centroids.lon[idx_non_zero_wind],
+            'value': 1,
+            'impf_TC': 1,
+            'region_id': country_code_all
+        })
+        flat_gdf['geometry'] = points_from_xy(x=flat_gdf['lon'], y=flat_gdf['lat'], crs=DEF_CRS)
+
+        flat_exposure_all = Exposures(
+            data=flat_gdf,
+            value_unit="unitless"
+        )
+
         # now run impact for each country
         for country_code in country_code_unique:
             country_iso3 = country_to_iso(country_code, "alpha3")
             print(f"   ...{country_iso3}")
+
+            # Calculate areas affected by cat 1 and cat 3
+            impf_cat1 = impf_set_exposed_pop(threshold = 32.92) # Hurricane winds
+            impf_cat3 = impf_set_exposed_pop(threshold = 50) # Cat 3 winds
+
+            exp_flat = Exposures(
+                data=flat_exposure_all.gdf[flat_exposure_all.gdf['region_id'] == country_code],
+                value_unit="unitless"
+            )
+            assert exp_flat.gdf.shape[0] > 0
+
+            impact_cat1 = ImpactCalc(exp_flat, impf_cat1, tc_haz).impact()
+            if impact_cat1.aai_agg == 0.: # do not save the files if impact is 0.
+                print(f"No land affected by Cat 1 winds for country {country_code} with storm {tc_name}.")
+                continue
+            else:
+                impact_cat1.write_hdf5(Path(IMPACT_DIR, f"{tc_name}_{country_iso3}_cat1_affected.h5"))
+
+            impact_cat3 = ImpactCalc(exp_flat, impf_cat3, tc_haz).impact()
+            if impact_cat3.aai_agg == 0.:
+                print(f"No land affected by Cat 3 winds for country {country_code} with storm {tc_name}.")
+            else:
+                impact_cat3.write_hdf5(Path(IMPACT_DIR, f"{tc_name}_{country_iso3}_cat3_affected.h5"))
 
             try:
                 exp = client.get_exposures(
