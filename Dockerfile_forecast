@@ -1,10 +1,11 @@
-FROM climada_petals:latest
+FROM crease/climada_petals:latest
 
 RUN apt-get update && apt-get install -y pandoc
 
 COPY . /app
 COPY climada_docker.conf /app/climada.conf
 COPY entrypoint_docker.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 WORKDIR /app
 RUN apt-get update \
     && apt-get install -y pandoc
