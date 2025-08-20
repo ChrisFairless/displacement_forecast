@@ -171,12 +171,12 @@ def check_downloads(forecast, fix=False):
 
     if fix and not os.path.exists(forecast['dir']['tracks']):
         print(f"Missing tracks folder: reprocessing forecast {forecast['time_str']}...")
-        download_tracks.process_forecast(forecast['time_str'], overwrite=True)
+        download_tracks.process_bufr(forecast['time_str'], overwrite=True)
     
     tracks_path = Path(forecast['dir']['tracks'], "ECMWF_TC_tracks.h5")
     if fix and not os.path.exists(tracks_path):
         print(f"Missing tracks file: reprocessing forecast {forecast['time_str']}...")
-        download_tracks.process_forecast(forecast['time_str'], overwrite=True)
+        download_tracks.process_bufr(forecast['time_str'], overwrite=True)
 
     if not os.path.exists(tracks_path):
         forecast['errors'].append(f"No tracks file found at {tracks_path}.")

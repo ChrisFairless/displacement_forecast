@@ -31,7 +31,7 @@ def get_forecast_tracks(time_str):
 
 def download_and_process_forecast(time_str, overwrite=False):
     download_forecast(time_str, overwrite=overwrite)
-    process_forecast(time_str, overwrite=overwrite)
+    process_bufr(time_str, overwrite=overwrite)
 
 
 def download_forecast(time_str, overwrite=False):
@@ -53,7 +53,7 @@ def download_forecast(time_str, overwrite=False):
 
 
 
-def process_forecast(time_str, overwrite=False):    
+def process_bufr(time_str, overwrite=False):    
     FORECAST_DIR = Path(WORKING_DIR, time_str)
     BUFR_DIR = Path(FORECAST_DIR, "bufr")
     TRACKS_DIR = Path(FORECAST_DIR, "tracks")
@@ -87,7 +87,7 @@ def process_forecast(time_str, overwrite=False):
 def download_and_process_latest_forecast(overwrite=False):
     latest_time = get_latest_forecast_time()
     download_forecast(latest_time, overwrite=overwrite)
-    process_forecast(latest_time, overwrite=overwrite)
+    process_bufr(latest_time, overwrite=overwrite)
 
 
 def get_available_forecast_times():
