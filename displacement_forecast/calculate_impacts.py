@@ -98,17 +98,15 @@ def calculate_impacts(time_str=None, overwrite=False):
             # run impact calc for people exposed to cat. 1 wind speed or above
             impf_exposed = impf_set_exposed_pop(threshold=EXPOSED_TO_WIND_THRESHOLD)
             impact_exposed = ImpactCalc(exp, impf_exposed, tc_haz).impact()
-
             if impact_exposed.aai_agg == 0.: # do not save the files if impact is 0.
                 print(f"No exposed population for country {country_code} with storm {tc_name}.")
+                continue
             else:
                 impact_exposed.write_hdf5(Path(IMPACT_DIR, f"{tc_name}_{country_iso3}_exposed_population.h5"))
 
             # run the same impact calc but for displacement
             impf_displacement = impf_set_displacement(country_iso3)
-
             impact_displacement = ImpactCalc(exp, impf_displacement, tc_haz).impact()
-
             if impact_displacement.aai_agg == 0.: # do not save the files if impact is 0.
                 print(f"No displaced population for country {country_code} with storm {tc_name}.")
             else:
