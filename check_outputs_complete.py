@@ -10,6 +10,7 @@ from displacement_forecast import (
 import os
 import sys
 from pathlib import Path
+from traceback import print_tb
 import pandas as pd
 from climada import CONFIG
 
@@ -66,48 +67,54 @@ def check_outputs_complete(fix=False):
         try:
             forecast = check_downloads(forecast, fix=fix)
         except Exception as e:
-            print(f"Error checking downloads for {time_str}: {str(sys.exc_info()[1])}")
-            forecast['errors'].append(f"Error checking downloads: {str(sys.exc_info()[1])}")
+            print(f"Error checking downloads for {time_str}: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+            forecast['errors'].append(f"Error checking downloads: {str(sys.exc_info())}")
             continue
 
         print("--- STEP 2: Analysing forecast tracks ---")
         try:
             forecast = check_track_plots(forecast, fix=fix)
         except Exception as e:
-            print(f"Error checking track plots for {time_str}: {str(sys.exc_info()[1])}")
-            forecast['errors'].append(f"Error checking track plots: {str(sys.exc_info()[1])}")
+            print(f"Error checking track plots for {time_str}: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+            forecast['errors'].append(f"Error checking track plots: {str(sys.exc_info())}")
             continue
 
         print("--- STEP 3: Generating wind fields ---")
         try:
             forecast = check_wind_fields(forecast, fix=fix)
         except Exception as e:
-            print(f"Error checking wind fields for {time_str}: {str(sys.exc_info()[1])}")
-            forecast['errors'].append(f"Error checking wind fields: {str(sys.exc_info()[1])}")
+            print(f"Error checking wind fields for {time_str}: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+            forecast['errors'].append(f"Error checking wind fields: {str(sys.exc_info())}")
             continue
 
         print("--- STEP 4: Calculating impacts ---")
         try:
             forecast = check_impacts(forecast, fix=fix)
         except Exception as e:
-            print(f"Error checking impacts for {time_str}: {str(sys.exc_info()[1])}")
-            forecast['errors'].append(f"Error checking impacts: {str(sys.exc_info()[1])}")
+            print(f"Error checking impacts for {time_str}: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+            forecast['errors'].append(f"Error checking impacts: {str(sys.exc_info())}")
             continue
 
         print("--- STEP 5: Analysing impacts ---")
         try:
             forecast = check_impact_plots(forecast, fix=fix)
         except Exception as e:
-            print(f"Error checking impact plots for {time_str}: {str(sys.exc_info()[1])}")
-            forecast['errors'].append(f"Error checking impact plots: {str(sys.exc_info()[1])}")
+            print(f"Error checking impact plots for {time_str}: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+            forecast['errors'].append(f"Error checking impact plots: {str(sys.exc_info())}")
             continue
 
         print("--- STEP 6: Building report ---")
         try:
             forecast = check_report(forecast, fix=fix)
         except Exception as e:
-            print(f"Error checking report for {time_str}: {str(sys.exc_info()[1])}")
-            forecast['errors'].append(f"Error checking report: {str(sys.exc_info()[1])}")
+            print(f"Error checking report for {time_str}: {str(sys.exc_info())}")
+            print_tb(sys.exc_info()[2])
+            forecast['errors'].append(f"Error checking report: {str(sys.exc_info())}")
             continue
 
         forecast_dict[time_str] = forecast
