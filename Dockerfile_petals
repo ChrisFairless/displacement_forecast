@@ -58,7 +58,5 @@ RUN apt-get update
 
 # Copy conda environment and CLIMADA from builder
 COPY --from=builder /root/conda /root/conda
-COPY --from=builder /app/climada_python /app/climada_python
-COPY --from=builder /app/climada_petals /app/climada_petals
 
 WORKDIR /app/
