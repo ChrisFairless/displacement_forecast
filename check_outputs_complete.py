@@ -27,6 +27,7 @@ def check_outputs_complete(fix=False):
     print(f"There are {len(forecast_time_list_ftp)} forecast times available.")
 
     forecast_time_list_local = os.listdir(WORKING_DIR)
+    forecast_time_list_local = [p for p in forecast_time_list_local if os.path.isdir(Path(WORKING_DIR, p))]
     forecast_time_list_local = [p for p in forecast_time_list_local if p[0].isdigit() and len(p) == 14]
     print(f"There are {len(forecast_time_list_local)} forecast times available locally.")
 
