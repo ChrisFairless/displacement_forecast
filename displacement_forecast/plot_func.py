@@ -308,7 +308,7 @@ def plot_imp_map_exposed(impact_summary_dict: dict,
 
     d_lat = np.diff(np.sort(gdf.geometry.x))
     d_lat = d_lat[d_lat != 0].min()
-    gridsize = int(np.ceil((extent[2] - extent[0]) / (2 * d_lat)))
+    gridsize = int(np.ceil((extent[2] - extent[0]) / (4 * d_lat)))
 
     hb = ax.hexbin(
         x=gdf.geometry.x,
@@ -386,7 +386,7 @@ def plot_imp_map_displacement(impact_summary_dict: dict,
 
     d_lat = np.diff(np.sort(gdf.geometry.x))
     d_lat = d_lat[d_lat != 0].min()
-    gridsize = int(np.ceil((extent[2] - extent[0]) / (2 * d_lat)))
+    gridsize = int(np.ceil((extent[2] - extent[0]) / (4 * d_lat)))
 
     hb = ax.hexbin(
         x=gdf.geometry.x,
