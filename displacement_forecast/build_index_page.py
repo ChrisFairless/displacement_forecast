@@ -38,7 +38,7 @@ def build_index_page():
         'Storms': summary_stats['storm_names_str'],
         'Number Affecting People': summary_stats['number_affecting_people'],
         'Number Displacing People': summary_stats['number_displacing_people']
-    })
+    }).sort_values(by='Forecast Time', ascending=False)
 
     index_file = Path(WORKING_DIR, 'home.md')
     shutil.copy(Path(TEMPLATE_DIR, 'home.md'), index_file)
