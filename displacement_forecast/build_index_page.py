@@ -48,7 +48,7 @@ def build_index_page():
     summary_file = Path(WORKING_DIR, 'summary_of_forecasts.md')
     shutil.copy(Path(TEMPLATE_DIR, 'summary_of_forecasts.md'), summary_file)
     with open(summary_file, "a") as f:
-        output_stats.to_markdown(f, index=False, tablefmt="pipe", floatfmt=".2f")
+        output_stats.to_markdown(f, index=False, tablefmt="github", floatfmt=".2f")
     index_components.append(summary_file)
  
     # List of input files to combine
