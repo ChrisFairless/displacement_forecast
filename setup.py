@@ -11,7 +11,8 @@ setup(
     python_requires=">=3.9,<3.12",
     install_requires=[
         'climada',
-        'climada_petals'
+        'climada_petals',
+        'beautifulsoup4',
     ],
     packages=find_packages(),
     include_package_data=False
