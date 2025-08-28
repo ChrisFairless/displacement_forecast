@@ -2,4 +2,6 @@
 
 ![Histogram of possible displaced population](XX_displacement_hist_path_XX)
 
+
 ![Map of possible displaced population](XX_displacement_map_path_XX)
+
