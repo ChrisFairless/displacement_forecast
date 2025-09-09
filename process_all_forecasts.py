@@ -8,7 +8,16 @@ from displacement_forecast import (
     build_report,
     build_index_page
 )
-    
+import os
+from pathlib import Path
+from climada import CONFIG
+
+
+# Reprocess everything
+overwrite=False
+
+WORKING_DIR = CONFIG.forecast_sandbox.dir.str()
+
 
 def process_all_forecasts(overwrite=False):
 
@@ -19,6 +28,12 @@ def process_all_forecasts(overwrite=False):
     print(f"There are {str(len(forecast_time_list))} forecast times available.")
 
     for time_str in forecast_time_list:
+        FORECAST_DIR = Path(WORKING_DIR, time_str)
+        REPORT_DIR = Path(FORECAST_DIR, "report")
+        if os.path.exists(Path(REPORT_DIR, 'report.md')) and not overwrite:
+            print(f"--- Report for forecast {time_str} already built: skipping ---")
+            continue
+
         print("\n---------------------")
         print("FORECAST TIME: " + time_str)
         print("---------------------\n")
@@ -52,4 +67,4 @@ def process_all_forecasts(overwrite=False):
 
 
 if __name__ == "__main__":
-    process_all_forecasts()
+    process_all_forecasts(overwrite)
