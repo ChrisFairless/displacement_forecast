@@ -30,7 +30,7 @@ def build_index_page():
     summary_stats = pd.DataFrame(load_json(Path(p, 'summary_stats.json')) for p in results_dir_list)
     summary_stats['url'] = [str(Path(p, 'report', 'report.html')) for p in forecast_dir_list]
     summary_stats['link_markdown'] = [f'[{p["forecast_time"]}]({p["url"]})' for _, p in summary_stats.iterrows()]
-    summary_stats['storm_names_str'] = summary_stats['storm_names'].apply(lambda x: '\n'.join(x))
+    summary_stats['storm_names_str'] = summary_stats['storm_names'].apply(lambda x: ', '.join(x))
 
     output_stats = pd.DataFrame({
         'Forecast Time': summary_stats['link_markdown'],

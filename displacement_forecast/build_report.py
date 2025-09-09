@@ -64,7 +64,8 @@ def build_report(time_str, overwrite=False):
     summary_stats['storm_names'] = []
     summary_stats['number_affecting_people'] = 0
     summary_stats['number_displacing_people'] = 0
-
+    summary_stats['storms_affecting_people'] = set()
+    summary_stats['storms_displacing_people'] = set()
 
     print("Adding overview")
     overview_file = Path(TEMPLATE_DIR, 'tracks_overview.md')
@@ -103,8 +104,6 @@ def build_report(time_str, overwrite=False):
         tc_name = tc_base_file_name.split('_')[2]
         find_replace['XX_name_XX'] = tc_name
         summary_stats['storm_names'].append(tc_name)
-        summary_stats['storms_affecting_people'] = set()
-        summary_stats['storms_displacing_people'] = set()
 
         impact_files = os.listdir(IMPACT_DIR)
         impact_files = [f for f in impact_files if f.startswith(tc_name)]
