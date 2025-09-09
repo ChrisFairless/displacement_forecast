@@ -26,7 +26,14 @@ def get_forecast_tracks(time_str):
     if not os.path.exists(TRACKS_DIR):
         raise FileNotFoundError(f"Directory {str(TRACKS_DIR)} does not exist. Please download the forecast first.")
     
-    return TCTracks.from_hdf5(Path(TRACKS_DIR, "ECMWF_TC_tracks.h5"))
+    tracks_path = Path(TRACKS_DIR, "ECMWF_TC_tracks.h5")
+    if not os.path.exists(tracks_path):
+        if count_named_storms(time_str) == 0:
+            print(f"No named storms found in forecast {time_str}. Returning empty TCTracks object.")
+            return TCTracks()
+        else:
+            raise FileNotFoundError(f"Tracks file {str(tracks_path)} does not exist. Please process the BUFR files first.")
+    return TCTracks.from_hdf5(tracks_path)
 
 
 def count_named_storms(time_str):
