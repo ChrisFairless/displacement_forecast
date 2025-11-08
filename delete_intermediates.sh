@@ -6,7 +6,7 @@
 
 # Choose a subset of outputs to remove: make this string longer or shorter 
 # to remove a year/month/day/individual forecast
-OUTPUT_ROOT='output/2025'
+OUTPUT_ROOT='/Users/chrisfairless/Data/UNU/idmc/displacement_forecast/output/20'
 
 echo "Deleting intermediate files"
 
