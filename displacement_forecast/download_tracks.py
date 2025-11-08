@@ -94,9 +94,11 @@ def process_bufr(time_str, overwrite=False):
     tr_filter = filter_storm(tr_fcast)
 
     # Consistency check: ensure the number of named storms matches the BUFR count
+    # I thought this was a valid check but it looks like maybe there are sometimes empty forecasts for named storms?
+    # e.g. Melissa on 20251101000000
     bufr_named_count = count_named_storms(time_str)
-    assert (len(tr_filter.data) > 0) == (bufr_named_count > 0), \
-        f"The {bufr_named_count} named storm files is inconsistent with the {len(tr_filter.data)} tracks in the forecast."
+    if (len(tr_filter.data) > 0) != (bufr_named_count > 0):
+        print(f"Warning: The {bufr_named_count} named storm files is inconsistent with the {len(tr_filter.data)} tracks in the forecast.")
 
     if len(tr_filter.data) == 0:
         print(f"No named storms found in forecast {time_str}.")
