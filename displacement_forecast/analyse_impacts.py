@@ -99,30 +99,35 @@ def analyse_impacts(time_str=None, overwrite=False):
                 imp_summary,
                 impact)
 
-        if impact_type == "cat1":
-            # create affected area maps
-            ax_map_cat1 = plot_map_cat(imp_summary, impact, 1)
-            ax_map_cat1.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
+        try:
+            if impact_type == "cat1":
+                # create affected area maps
+                ax_map_cat1 = plot_map_cat(imp_summary, impact, 1)
+                ax_map_cat1.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
 
-        if impact_type == "cat3":
-            # create affected area maps
-            ax_map_cat3 = plot_map_cat(imp_summary, impact, 3)
-            ax_map_cat3.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
+            if impact_type == "cat3":
+                # create affected area maps
+                ax_map_cat3 = plot_map_cat(imp_summary, impact, 3)
+                ax_map_cat3.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
 
-        if impact_type == "exposed":
-            # create impact maps
-            ax_map_exposed = plot_imp_map_exposed(imp_summary, impact)
-            ax_map_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
+            if impact_type == "exposed":
+                # create impact maps
+                ax_map_exposed = plot_imp_map_exposed(imp_summary, impact)
+                ax_map_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
 
-            # create histogram
-            ax_hist_exposed = plot_histogram(imp_summary, impact)
-            ax_hist_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))
+                # create histogram
+                ax_hist_exposed = plot_histogram(imp_summary, impact)
+                ax_hist_exposed.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))
 
-        if impact_type == "displaced":
-            # create impact maps
-            ax_map_displacement = plot_imp_map_displacement(imp_summary, impact)
-            ax_map_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
+            if impact_type == "displaced":
+                # create impact maps
+                ax_map_displacement = plot_imp_map_displacement(imp_summary, impact)
+                ax_map_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_map_file_name(imp_summary)))
 
-            # create histogram
-            ax_hist_displacement = plot_histogram(imp_summary, impact)
-            ax_hist_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))
+                # create histogram
+                ax_hist_displacement = plot_histogram(imp_summary, impact)
+                ax_hist_displacement.figure.savefig(Path(IMPACT_ANALYSIS_DIR, make_save_histogram_file_name(imp_summary)))
+        
+        except Exception as e:
+            print(f"Could not create plots for {impact_type} impacts for storm {tc_name} in country {country_iso3}. Error: {e}")
+            raise e
