@@ -13,6 +13,8 @@ setup(
         'climada',
         'climada_petals',
         'beautifulsoup4',
+	    'contextily',
+	    'plotly'
     ],
     packages=find_packages(),
     include_package_data=False
