@@ -75,6 +75,10 @@ def analyse_impacts(time_str=None, overwrite=False):
         # read the hdf file
         impact = Impact.from_hdf5(Path(IMPACT_DIR, impact_file))
 
+        if impact.imp_mat.shape[1] == 1:
+            print("Skipping a country with just one centroid: fix this!")   # TODO
+            continue
+
         imp_summary = summarize_forecast(
             country_iso3=country_iso3,
             forecast_time=formatted_datetime,
