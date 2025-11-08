@@ -124,7 +124,13 @@ def build_report(time_str, overwrite=False):
             print("Working on country code:", country_code)
 
             country_iso3 = country_to_iso(country_code, "alpha3")
-            country_name = pycountry.countries.get(alpha_3=country_iso3).name
+            country_data = pycountry.countries.get(alpha_3=country_iso3)
+            if country_data is None:
+                # TODO handle this case!
+                print(f"Country code {country_code}: {country_iso3} not found in pycountry database. Skipping.")
+                continue
+
+            country_name = country_data.name
             find_replace['XX_country_XX'] = country_name
 
             storm_dict = {
