@@ -39,7 +39,7 @@ def get_forecast_tracks(time_str):
 def count_named_storms(time_str):
     FORECAST_DIR = Path(WORKING_DIR, time_str)
     BUFR_DIR = Path(FORECAST_DIR, "bufr")
-    downloaded_files = os.listdir(BUFR_DIR)
+    downloaded_files = [f for f in os.listdir(BUFR_DIR) if os.path.getsize(os.path.join(BUFR_DIR, f)) > 1024]
     if len(downloaded_files) == 0:
         raise FileNotFoundError(f"No BUFR files found in {BUFR_DIR}. Please download the forecast first.")
     storm_ids = [s.split('_')[8] for s in downloaded_files]
